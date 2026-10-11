@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install Distribution.
+GenericName=System Installer
+Comment=put the period on your disk
+Exec=sh -c "sudo -E calamares"
+Icon=/etc/calamares/branding/distribution/logo.png
+Terminal=false
+Categories=System;

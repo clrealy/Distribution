@@ -13,6 +13,16 @@ LIVE_USER="liveuser"
 
 PROFILE="./profile"
 BRANDING="$(cd "$(dirname "$0")" && pwd)/branding"
+LOCALREPO="$(pwd)/localrepo"
+
+# AUR packages to bake into the ISO, in build order (deps first).
+# calamares isn't in Arch's official repos, so we build it ourselves.
+AUR_PKGS=(ckbcomp calamares)
+
+if [ "$EUID" -eq 0 ]; then
+  echo "run this as your normal user, not root (makepkg refuses root). it'll sudo when it needs to."
+  exit 1
+fi
 
 echo "[1/6] installing archiso..."
 sudo pacman -S --needed --noconfirm archiso
@@ -37,7 +47,9 @@ sed -i "/^file_permissions=(/a\\
   [\"/etc/sudoers.d/${LIVE_USER}\"]=\"0:0:440\"\\
   [\"/usr/local/bin/gurt\"]=\"0:0:755\"\\
   [\"/usr/local/bin/gurt-pacman\"]=\"0:0:755\"\\
-  [\"/usr/local/bin/distribution-first-login\"]=\"0:0:755\"" "$PROFILE/profiledef.sh"
+  [\"/usr/local/bin/distribution-first-login\"]=\"0:0:755\"\\
+  [\"/home/${LIVE_USER}/Desktop\"]=\"1000:1000:755\"\\
+  [\"/home/${LIVE_USER}/Desktop/install-distribution.desktop\"]=\"1000:1000:755\"" "$PROFILE/profiledef.sh"
 
 echo "[4/6] adding packages (KDE desktop)..."
 cat >> "$PROFILE/packages.x86_64" <<'EOF'
@@ -62,6 +74,37 @@ libarchive
 flatpak
 # ---- boot splash ----
 plymouth
+# ---- installer ----
+calamares
+grub
+efibootmgr
+os-prober
+EOF
+
+# ===== build AUR packages (calamares) into a local repo =====
+echo "   -> building AUR packages: ${AUR_PKGS[*]} (calamares is a big C++ build, this takes a while)"
+sudo pacman -S --needed --noconfirm base-devel git
+mkdir -p "$LOCALREPO" ./aur-build
+for pkg in "${AUR_PKGS[@]}"; do
+  if ls "$LOCALREPO/${pkg}"-[0-9]*.pkg.tar.zst >/dev/null 2>&1; then
+    echo "      $pkg already built, skipping (delete localrepo/ to rebuild)"
+    continue
+  fi
+  rm -rf "./aur-build/$pkg"
+  git clone --depth 1 "https://aur.archlinux.org/${pkg}.git" "./aur-build/$pkg"
+  # -s pulls official-repo deps, -i installs it here so the next AUR pkg can depend on it
+  ( cd "./aur-build/$pkg" && makepkg -si --needed --noconfirm )
+  cp "./aur-build/$pkg"/*.pkg.tar.zst "$LOCALREPO/"
+done
+rm -f "$LOCALREPO"/distribution-local.db* "$LOCALREPO"/distribution-local.files*
+repo-add "$LOCALREPO/distribution-local.db.tar.gz" "$LOCALREPO"/*.pkg.tar.zst
+
+# let mkarchiso install from it (build-time only, the ISO doesn't keep this repo)
+cat >> "$PROFILE/pacman.conf" <<EOF
+
+[distribution-local]
+SigLevel = Optional TrustAll
+Server = file://${LOCALREPO}
 EOF
 
 echo "[5/6] configuring live system..."
@@ -195,6 +238,16 @@ OnlyShowIn=KDE;
 NoDisplay=true
 X-KDE-autostart-phase=2
 EOF
+
+# ===== installer: Calamares =====
+mkdir -p "$AIR/etc/calamares" "$AIR/usr/share/applications" "$AIR/home/${LIVE_USER}/Desktop" "$AIR/usr/share/distribution"
+cp    "$BRANDING/calamares/settings.conf" "$AIR/etc/calamares/settings.conf"
+cp -r "$BRANDING/calamares/modules"       "$AIR/etc/calamares/modules"
+cp -r "$BRANDING/calamares/branding"      "$AIR/etc/calamares/branding"
+cp    "$BRANDING/distribution-files/linux.preset" "$AIR/usr/share/distribution/linux.preset"
+# installer icon in the app menu + on the live desktop
+cp "$BRANDING/calamares/install-distribution.desktop" "$AIR/usr/share/applications/install-distribution.desktop"
+cp "$BRANDING/calamares/install-distribution.desktop" "$AIR/home/${LIVE_USER}/Desktop/install-distribution.desktop"
 
 echo "[6/6] building ISO (takes a while, go touch grass)..."
 sudo mkarchiso -v -w ./work -o ./out "$PROFILE"

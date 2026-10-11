@@ -1,0 +1,40 @@
+---
+componentName: distribution
+
+welcomeStyleCalamares: false
+welcomeExpandingLogo: true
+
+windowExpanding: normal
+windowSize: 900px,580px
+windowPlacement: center
+
+sidebar: widget
+navigation: widget
+
+strings:
+    productName:         "Distribution."
+    shortProductName:    "Distribution."
+    version:             "0.1"
+    shortVersion:        "0.1"
+    versionedName:       "Distribution. 0.1"
+    shortVersionedName:  "Distribution. 0.1"
+    bootloaderEntryName: "Distribution"
+    productUrl:          "https://github.com/clrealy/distribution"
+    supportUrl:          "https://github.com/clrealy/distribution/issues"
+    knownIssuesUrl:      "https://github.com/clrealy/distribution/issues"
+    releaseNotesUrl:     "https://github.com/clrealy/distribution"
+    donateUrl:           ""
+
+images:
+    productLogo:    "logo.png"
+    productIcon:    "logo.png"
+    productWelcome: "welcome.png"
+
+slideshow: "show.qml"
+slideshowAPI: 2
+
+style:
+    SidebarBackground:        "#0E0E10"
+    SidebarText:              "#F4F1EC"
+    SidebarTextCurrent:       "#FFFFFF"
+    SidebarBackgroundCurrent: "#C2380C"
