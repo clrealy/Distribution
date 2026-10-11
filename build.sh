@@ -45,6 +45,7 @@ sed -i \
 sed -i "/^file_permissions=(/a\\
   [\"/home/${LIVE_USER}\"]=\"1000:1000:750\"\\
   [\"/etc/sudoers.d/${LIVE_USER}\"]=\"0:0:440\"\\
+  [\"/etc/gshadow\"]=\"0:0:400\"\\
   [\"/usr/local/bin/gurt\"]=\"0:0:755\"\\
   [\"/usr/local/bin/gurt-pacman\"]=\"0:0:755\"\\
   [\"/usr/local/bin/distribution-first-login\"]=\"0:0:755\"\\
@@ -123,6 +124,10 @@ EOF
 echo "${DISTRO_NAME}" > "$AIR/etc/hostname"
 
 # live user (SDDM won't log in as root)
+# releng doesn't ship every account file; start any missing one from Arch's pristine copy
+for f in passwd shadow group gshadow; do
+  [ -f "$AIR/etc/$f" ] || sudo cat "/usr/share/factory/etc/$f" > "$AIR/etc/$f"
+done
 echo "${LIVE_USER}:x:1000:1000::/home/${LIVE_USER}:/bin/bash" >> "$AIR/etc/passwd"
 echo "${LIVE_USER}::14871::::::"                             >> "$AIR/etc/shadow"
 echo "${LIVE_USER}:x:1000:"                                    >> "$AIR/etc/group"
@@ -190,6 +195,7 @@ esac
 EOF
 
 # alias only hits humans in a terminal — scripts + gurt itself still reach real pacman
+mkdir -p "$AIR/etc/profile.d"
 cat > "$AIR/etc/profile.d/gurt.sh" <<'EOF'
 alias sudo='sudo '
 alias pacman='gurt-pacman'
