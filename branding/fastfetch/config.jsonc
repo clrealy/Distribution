@@ -1,0 +1,31 @@
+// Distribution. fastfetch config 🟠
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "/usr/share/distribution/fastfetch-logo.txt",
+    "color": { "1": "38;2;58;58;66", "2": "38;2;255;79;26" },
+    "padding": { "top": 1, "left": 2, "right": 3 }
+  },
+  "display": {
+    "separator": "  ",
+    "color": { "keys": "38;2;255;79;26", "title": "38;2;255;79;26" }
+  },
+  "modules": [
+    "title",
+    { "type": "custom", "format": "────────────────────" },
+    { "type": "os", "key": "os", "format": "Distribution. {version-id}" },
+    { "type": "kernel", "key": "kernel" },
+    { "type": "custom", "key": "pkgs", "format": "gurt 🦆" },
+    { "type": "packages", "key": "count" },
+    { "type": "de", "key": "de" },
+    { "type": "shell", "key": "shell" },
+    { "type": "terminal", "key": "term" },
+    { "type": "cpu", "key": "cpu" },
+    { "type": "gpu", "key": "gpu" },
+    { "type": "memory", "key": "ram" },
+    { "type": "uptime", "key": "up" },
+    "break",
+    { "type": "colors", "symbol": "circle" }
+  ]
+}

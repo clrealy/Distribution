@@ -1,0 +1,8 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "clearly124" }],
+        "Id": "Distribution",
+        "License": "MIT",
+        "Name": "Distribution."
+    }
+}

@@ -1,0 +1,107 @@
+// Distribution. boot splash — the period drops in 🟠
+// dark tile in the middle, the dot falls from the top, bounces, and lands in the corner.
+
+Window.SetBackgroundTopColor(0.055, 0.055, 0.063);
+Window.SetBackgroundBottomColor(0.055, 0.055, 0.063);
+
+tile_image = Image("tile.png");
+dot_image  = Image("dot.png");
+
+TILE = tile_image.GetWidth();
+DOT  = dot_image.GetWidth();
+PAD  = 47 * TILE / 256;
+
+tile = Sprite(tile_image);
+tile_x = Window.GetX() + Window.GetWidth()  / 2 - TILE / 2;
+tile_y = Window.GetY() + Window.GetHeight() / 2 - TILE / 2;
+tile.SetX(tile_x);
+tile.SetY(tile_y);
+tile.SetZ(0);
+
+dot = Sprite(dot_image);
+dot_x  = tile_x + TILE - PAD - DOT;
+target = tile_y + TILE - PAD - DOT;
+dot.SetX(dot_x);
+dot.SetZ(10);
+
+// physics
+y      = Window.GetY() - DOT - 20;
+vy     = 0;
+g      = 1.1;
+squash = 0;
+delay  = 15;   // ~0.3s pause before the drop
+landed = 0;
+dot.SetY(y);
+
+fun refresh_callback ()
+{
+  if (global.landed) return;
+
+  if (global.delay > 0)
+  {
+    global.delay--;
+    return;
+  }
+
+  global.vy += global.g;
+  global.y  += global.vy;
+
+  if (global.y >= global.target)
+  {
+    global.y = global.target;
+    if (Math.Abs(global.vy) > 2.5)
+    {
+      global.squash = Math.Min(1, Math.Abs(global.vy) / 25);
+      global.vy = -global.vy * 0.42;
+    }
+    else
+    {
+      global.vy = 0;
+    }
+  }
+
+  global.squash *= 0.82;
+
+  if (global.squash > 0.02)
+  {
+    w = Math.Int(global.DOT * (1 + 0.3 * global.squash));
+    h = Math.Int(global.DOT * (1 - 0.3 * global.squash));
+    global.dot.SetImage(global.dot_image.Scale(w, h));
+    global.dot.SetX(global.dot_x + (global.DOT - w) / 2);
+    global.dot.SetY(global.y + global.DOT - h);
+  }
+  else
+  {
+    global.dot.SetImage(global.dot_image);
+    global.dot.SetX(global.dot_x);
+    global.dot.SetY(global.y);
+    if (global.vy == 0 && global.y == global.target) global.landed = 1;
+  }
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+
+// ---- password prompt (encrypted disks) ----
+prompt_sprite  = Sprite();
+bullets_sprite = Sprite();
+
+fun display_password_callback (prompt, bullets)
+{
+  text = "";
+  for (i = 0; i < bullets; i++) text += "•";
+  global.prompt_sprite.SetImage(Image.Text(prompt, 0.9, 0.9, 0.9));
+  global.prompt_sprite.SetX(Window.GetX() + Window.GetWidth() / 2 - global.prompt_sprite.GetImage().GetWidth() / 2);
+  global.prompt_sprite.SetY(global.tile_y + global.TILE + 40);
+  global.bullets_sprite.SetImage(Image.Text(text, 1, 0.31, 0.1));
+  global.bullets_sprite.SetX(Window.GetX() + Window.GetWidth() / 2 - global.bullets_sprite.GetImage().GetWidth() / 2);
+  global.bullets_sprite.SetY(global.tile_y + global.TILE + 70);
+}
+
+fun display_normal_callback ()
+{
+  global.prompt_sprite.SetImage(Image.Text("", 0, 0, 0));
+  global.bullets_sprite.SetImage(Image.Text("", 0, 0, 0));
+}
+
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayNormalFunction(display_normal_callback);

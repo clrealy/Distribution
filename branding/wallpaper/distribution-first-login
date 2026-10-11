@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# first login on Distribution.: set the wallpaper once, then never touch it again
+FLAG="${XDG_CONFIG_HOME:-$HOME/.config}/distribution/wallpaper-set"
+[ -f "$FLAG" ] && exit 0
+sleep 3   # let plasmashell finish loading
+plasma-apply-wallpaperimage /usr/share/wallpapers/Distribution/contents/images/3840x2160.png && {
+  mkdir -p "$(dirname "$FLAG")"
+  touch "$FLAG"
+}
